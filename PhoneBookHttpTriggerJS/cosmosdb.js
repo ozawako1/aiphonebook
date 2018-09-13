@@ -1,4 +1,11 @@
 
+/*
+var documentClient = require("documentdb").DocumentClient;
+var client = new documentClient(config.cosmosdb.endpoint, { "masterKey": config.cosmosdb.primaryKey });
+var databaseUrl = `dbs/${config.cosmosdb.databaseid}`;
+var collectionUrl = `${databaseUrl}/colls/${config.cosmosdb.collectionid}`;
+*/
+
 /**
  * Get the collection by ID, or create if it doesn't exist.
  */

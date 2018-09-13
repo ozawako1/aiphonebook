@@ -2,19 +2,91 @@ var util = require('./util.js');
 var mychatwork = require('./chatwork.js');
 var sql = require("./sqldb.js");
 var request_promise = require('request-promise');
+var Promise = require('promise');
 
 const TO_REG = /\[To:[0-9]*\].*\n/;
-var config = require("../conf/config.js");
-
-/*
-var documentClient = require("documentdb").DocumentClient;
-var client = new documentClient(config.cosmosdb.endpoint, { "masterKey": config.cosmosdb.primaryKey });
-var databaseUrl = `dbs/${config.cosmosdb.databaseid}`;
-var collectionUrl = `${databaseUrl}/colls/${config.cosmosdb.collectionid}`;
-*/
+var my_config = require("../conf/config.js");
 
 const CHATWORK_ID_ME = 2642322;
 const CHATPOST_FORMAT = "さん？";
+
+function get_garoon_schedules(result){
+
+    var uri = my_config.cybozufunc.url;
+    if (my_config.env.runningon == "Local"){
+        uri = my_config.cybozufunc.url_local;
+    }
+
+    var options = {
+        "method": "POST",
+        "uri": uri,
+        "qs": {
+            "code": my_config.cybozufunc.code,
+        },
+        body: {
+            "garoonid": result.userId.value,
+            "now": true
+        },
+        headers: {
+            'User-Agent': 'Request-Promise'
+        },
+        json: true // Automatically parses the JSON string in the response
+    };
+    
+    return request_promise(options)
+        .then(function (parsedBody) {
+            // POST succeeded...
+            return parsedBody;
+        })
+}
+
+function get_time(date)
+{
+    var h = date.getHours();
+    var m = date.getMinutes();
+
+    h = ("00" + h).slice(-2);
+    m = ("00" + m).slice(-2);
+
+    return h + ":" + m;
+}
+
+function format_schedules(evts, rslts) {
+
+    var name = "";
+    var evt = "";
+    var arr = [];
+
+    for( var i = 0 ; i < rslts.length ; i++){
+        name = rslts[i].name.value;
+        evt = "";
+        for (var j = 0 ; j < evts[i].events.length ; j++){
+            var st = new Date(evts[i].events[j].start.dateTime);
+            var et = new Date(evts[i].events[j].end.dateTime);
+
+            evt += get_time(st) + "-" + get_time(et) + " | " + evts[i].events[j].subject + "\n";
+        }
+        arr.push({"name":name, "event":evt});
+    };
+
+    return arr;
+}
+
+function get_schedule(results){
+
+    var promises = results.map(item => get_garoon_schedules(item));
+        
+    return Promise.all(promises)
+        .then((schedules) => format_schedules(schedules, results))
+        .then(function(arr){
+            return arr;
+        })
+        .catch(function(err){
+            console.log("get_schedule error:" +err.message);
+            return err;
+        });
+    
+}
 
 function post_chatwork(results, obj, org_msg){
 
@@ -31,10 +103,35 @@ function post_chatwork(results, obj, org_msg){
         console.log("No." + (i+1) + " " + msg + "\n");
     }
 
-    total += "\n BIZTEL prefix = 9 / Osaka prefix = 80";
+    total += "\n BIZTEL prefix = 9 / Osaka prefix = 80\n 8/20のオープン以降、お問い合わせ回数が、1,000 回を超えました。ご利用ありがとうございます。";
 
     obj.Reply(org_msg, total);
+
+    return results;
 }
+
+function post_chatwork_(results, obj, org_msg){
+
+    var total = "";
+
+    for (var i = 0 ; i < results.length ; i++) {
+        var msg = "";
+
+        if (results[i].event != "") {
+            msg += results[i].name + "さんの予定、\n";
+            msg += results[i].event + "\n";
+        }
+
+        total += msg;
+    }
+
+    if (total != "") {
+        obj.Reply(org_msg, total);
+    }
+
+    return results;
+}
+
 
 function send_sorry(err, obj, org_msg) {
     
@@ -128,9 +225,9 @@ module.exports = function (context, req) {
 
                 //AIハツドウ！Azure LUIS
                 var options = {
-                    "uri": config.luis.url,
+                    "uri": my_config.luis.url,
                     "qs": {
-                        "subscription-key": config.luis.subscriptionkey,
+                        "subscription-key": my_config.luis.subscriptionkey,
                         "verbose": "true",
                         "timezoneOffset": "540",
                         "q": msg.body.replace(TO_REG, '')
@@ -138,13 +235,15 @@ module.exports = function (context, req) {
                     "headers": {
                         'User-Agent': 'Request-Promise'
                     },
-                    json: true // Automatically parses the JSON string in the response
+                    json: true // Automatically parses the JSON strng in the response
                 };
                 
                 request_promise(options)
                     .then((repos) => check_whowhat(repos))
                     .then((whowhat) => sql.query_phonebook(whowhat))
                     .then((results) => post_chatwork(results, obj, msg))
+//                    .then((results) => get_schedule(results))
+//                    .then((arr) => post_chatwork_(arr, obj, msg))
                     .catch(function(err){
                         send_sorry(err, obj, msg);
                     });

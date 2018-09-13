@@ -36,11 +36,6 @@ function db_execquery(conn, who){
         "c.surNameReading = @who_surname_read OR " +
         "c.givenName = @who_givename OR " +
         "c.givenNameReading = @who_givename_read)";
-/*        "(c.surName = '" + who + "' OR " +
-        "c.surNameReading = '" + who + "' OR " +
-        "c.givenName = '" + who + "' OR " +
-        "c.givenNameReading = '" + who + "')";
-*/
 
     var results = [];
 
