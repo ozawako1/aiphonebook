@@ -103,7 +103,7 @@ function post_chatwork(results, obj, org_msg){
         console.log("No." + (i+1) + " " + msg + "\n");
     }
 
-    total += "\n BIZTEL prefix = 9 / Osaka prefix = 80\n 8/20のオープン以降、お問い合わせ回数が、1,000 回を超えました。ご利用ありがとうございます。";
+    total += "\n BIZTEL prefix = 9 / Osaka prefix = 80";
 
     obj.Reply(org_msg, total);
 
