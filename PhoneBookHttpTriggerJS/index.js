@@ -22,7 +22,7 @@ function get_garoon_schedules(result){
         "uri": uri,
         "qs": {
             "code": my_config.cybozufunc.code,
-            "garoonid": result.garoonId.value,
+            "garoonid": result.userId.value,
             "now": true
         },
         headers: {
