@@ -18,13 +18,11 @@ function get_garoon_schedules(result){
     }
 
     var options = {
-        "method": "POST",
+        "method": "GET",
         "uri": uri,
         "qs": {
             "code": my_config.cybozufunc.code,
-        },
-        body: {
-            "garoonid": result.userId.value,
+            "garoonid": result.garoonId.value,
             "now": true
         },
         headers: {
