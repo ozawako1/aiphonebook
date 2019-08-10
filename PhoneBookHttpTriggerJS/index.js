@@ -13,9 +13,6 @@ const CHATPOST_FORMAT = "さん？";
 function get_garoon_schedules(result){
 
     var uri = my_config.cybozufunc.url;
-    if (my_config.env.runningon == "Local"){
-        uri = my_config.cybozufunc.url_local;
-    }
 
     var options = {
         "method": "GET",
@@ -261,3 +258,4 @@ module.exports = function (context, req) {
     context.done();
 
 };
+
