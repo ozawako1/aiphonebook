@@ -18,12 +18,10 @@ function get_garoon_schedules(result){
     }
 
     var options = {
-        "method": "POST",
         "uri": uri,
         "qs": {
             "code": my_config.cybozufunc.code,
         },
-        body: {
             "garoonid": result.userId.value,
             "now": true
         },
@@ -176,6 +174,7 @@ function is_target_room(roomid) {
     if ((roomid == "82461612") ||   // 情シスbot（ベータ2版）
         (roomid == "68943669") ||   // 情報システム課
         (roomid == "75818614") ||   // 情シス委員会
+        (roomid == "136882950") ||  // いまどこ
         (roomid == "4952594")) {   // システム連絡用
         
         ret = false;
@@ -196,7 +195,7 @@ module.exports = function (context, req) {
     // 通信相手（user_agent）を見て、switch
     var ua = req.headers["user-agent"]; 
 
-    if (ua.indexOf("ChatWork-Webhook/", 0) == 0 || req.body.debug == true) {
+    if (ua.indexOf("ChatWork-Webhook/", 0) == 0) {
         
         //Chatwork
         msg = new mychatwork.CChatworkMessage(req.body);
@@ -260,4 +259,4 @@ module.exports = function (context, req) {
     };                    
     context.done();
 
-};
+};};
