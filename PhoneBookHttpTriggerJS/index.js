@@ -18,10 +18,10 @@ function get_garoon_schedules(result){
     }
 
     var options = {
+        "method": "GET",
         "uri": uri,
         "qs": {
             "code": my_config.cybozufunc.code,
-        },
             "garoonid": result.userId.value,
             "now": true
         },
@@ -96,6 +96,7 @@ function post_chatwork(results, obj, org_msg){
         msg += results[i].name.value + "さんの連絡先は、\n";
         msg += "内線電話:" + results[i].extensionNumber.value + "\n";
         msg += "携帯電話:" + results[i].mobilePhone.value + "\n";
+        // results[i].userid.value
 
         total += msg;
         console.log("No." + (i+1) + " " + msg + "\n");
@@ -259,4 +260,6 @@ module.exports = function (context, req) {
     };                    
     context.done();
 
-};};
+};
+
+//web
