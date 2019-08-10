@@ -10,7 +10,7 @@ var my_config = require("../conf/config.js");
 const CHATWORK_ID_ME = 2642322;
 const CHATPOST_FORMAT = "さん？";
 
-function get_garoon_schedules(result){
+function get_garoon_schedules(results){
 
     var uri = my_config.cybozufunc.url;
 
@@ -18,9 +18,9 @@ function get_garoon_schedules(result){
         "method": "GET",
         "uri": uri,
         "qs": {
+            "gid": results[0].userId.value,
             "code": my_config.cybozufunc.code,
-            "garoonid": result.userId.value,
-            "now": true
+            "diff": 0
         },
         headers: {
             'User-Agent': 'Request-Promise'
@@ -31,56 +31,18 @@ function get_garoon_schedules(result){
     return request_promise(options)
         .then(function (parsedBody) {
             // POST succeeded...
-            return parsedBody;
+            results[0].event = parsedBody;
+            return results;
         })
 }
 
-function get_time(date)
-{
-    var h = date.getHours();
-    var m = date.getMinutes();
-
-    h = ("00" + h).slice(-2);
-    m = ("00" + m).slice(-2);
-
-    return h + ":" + m;
-}
-
-function format_schedules(evts, rslts) {
-
-    var name = "";
-    var evt = "";
-    var arr = [];
-
-    for( var i = 0 ; i < rslts.length ; i++){
-        name = rslts[i].name.value;
-        evt = "";
-        for (var j = 0 ; j < evts[i].events.length ; j++){
-            var st = new Date(evts[i].events[j].start.dateTime);
-            var et = new Date(evts[i].events[j].end.dateTime);
-
-            evt += get_time(st) + "-" + get_time(et) + " | " + evts[i].events[j].subject + "\n";
-        }
-        arr.push({"name":name, "event":evt});
-    };
-
-    return arr;
-}
 
 function get_schedule(results){
 
-    var promises = results.map(item => get_garoon_schedules(item));
-        
-    return Promise.all(promises)
-        .then((schedules) => format_schedules(schedules, results))
-        .then(function(arr){
-            return arr;
-        })
-        .catch(function(err){
-            console.log("get_schedule error:" +err.message);
-            return err;
-        });
-    
+    if (results.length == 1) {
+        return get_garoon_schedules(results);
+    }
+    return results;
 }
 
 function post_chatwork(results, obj, org_msg){
@@ -93,8 +55,7 @@ function post_chatwork(results, obj, org_msg){
         msg += results[i].name.value + "さんの連絡先は、\n";
         msg += "内線電話:" + results[i].extensionNumber.value + "\n";
         msg += "携帯電話:" + results[i].mobilePhone.value + "\n";
-        // results[i].userid.value
-
+        
         total += msg;
         console.log("No." + (i+1) + " " + msg + "\n");
     }
@@ -106,23 +67,18 @@ function post_chatwork(results, obj, org_msg){
     return results;
 }
 
-function post_chatwork_(results, obj, org_msg){
+function post_chatwork_(results, obj, org_msg, schedule){
 
-    var total = "";
+    var msg1 = "";
+    var msg2 = "";
 
-    for (var i = 0 ; i < results.length ; i++) {
-        var msg = "";
+    if (results.length == 1) {
+        msg1 = results[0].name.value + "さんの予定\n";
+        msg2 = results[0].event;
 
-        if (results[i].event != "") {
-            msg += results[i].name + "さんの予定、\n";
-            msg += results[i].event + "\n";
+        if (msg2 != "") {
+            obj.Post(org_msg, msg1 + msg2);
         }
-
-        total += msg;
-    }
-
-    if (total != "") {
-        obj.Reply(org_msg, total);
     }
 
     return results;
@@ -189,6 +145,7 @@ module.exports = function (context, req) {
     var obj = null;
     var msg = null;
     var who = "";
+    var results = null;
 
     // 通信相手（user_agent）を見て、switch
     var ua = req.headers["user-agent"]; 
@@ -214,6 +171,8 @@ module.exports = function (context, req) {
 
                 sql.query_phonebook({"who":who, "what":"phone"})
                     .then((results) => post_chatwork(results, obj, msg))
+                    .then((results) => get_schedule(results))
+                    .then((results) => post_chatwork_(results, obj, msg))
                     .catch(function(err){
                         send_sorry(err, obj, msg);
                     });
@@ -239,8 +198,8 @@ module.exports = function (context, req) {
                     .then((repos) => check_whowhat(repos))
                     .then((whowhat) => sql.query_phonebook(whowhat))
                     .then((results) => post_chatwork(results, obj, msg))
-//                    .then((results) => get_schedule(results))
-//                    .then((arr) => post_chatwork_(arr, obj, msg))
+                    .then((results) => get_schedule(results))
+                    .then((results) => post_chatwork_(results, obj, msg))
                     .catch(function(err){
                         send_sorry(err, obj, msg);
                     });

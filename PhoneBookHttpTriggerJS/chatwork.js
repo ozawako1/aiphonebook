@@ -46,6 +46,29 @@ class CWebServiceChatwork {
 
     }
 
+    Post(org_msg, msg_body) {
+
+        var retrun_url = "https://api.chatwork.com/v2/rooms/" + org_msg.room_id + "/messages";
+
+        var reply = {
+            headers: {
+                'X-ChatWorkToken': this.token
+            },
+            form: {
+                body: msg_body
+            } 
+        };
+        
+        this.httpclient.post(retrun_url, reply, function (err, res, body) { 
+            if (!err && res.statusCode == 200) {
+                console.log("OK." + body);
+            } else {
+                console.log("NG." + body);
+            }   
+        });
+
+    }
+
     format_reply_msg(org_msg, msg) {
        
         var body = msg;
