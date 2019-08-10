@@ -261,8 +261,3 @@ module.exports = function (context, req) {
     context.done();
 
 };
-<<<<<<< HEAD
-
-//web
-=======
->>>>>>> e4bb4dda97b5a6392d28e9eb0d4a626e7cf62c48
