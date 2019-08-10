@@ -18,7 +18,7 @@ function get_garoon_schedules(results){
         "method": "GET",
         "uri": uri,
         "qs": {
-            "gid": results[0].userId.value,
+            "gid": results[0].userId.value.trim(),
             "code": my_config.cybozufunc.code,
             "diff": 0
         },
