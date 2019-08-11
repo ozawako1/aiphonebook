@@ -9,9 +9,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "promise": "^8.0.1",
-    "request": "^2.87.0",
-    "request-promise": "^4.2.2",
-    "tedious": "^2.6.4"
+    "promise": "^8.0.3",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
+    "tedious": "^2.7.1"
   }
 }
