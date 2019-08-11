@@ -6,7 +6,7 @@ var Promise = require('promise');
 
 const URL_AZURE_SQLDB = "lspgatewaysql.database.windows.net";
 
-var my_config.sqldb = {
+var my_config = {
     "userName": process.env.MY_AZURE_SQLDB_USERNAME,
     "password": process.env.MY_AZURE_SQLDB_PASSWORD,
     "server": URL_AZURE_SQLDB,
@@ -24,7 +24,7 @@ function db_conn(){
 
     return new Promise((resolve, reject) => {
         //CreateConnection
-        var conn = new DBConnection(my_config.sqldb);
+        var conn = new DBConnection(my_config);
         conn.on('connect', function(err) {  
             if(err){
                 reject(err);
