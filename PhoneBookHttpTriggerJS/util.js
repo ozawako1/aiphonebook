@@ -21,8 +21,6 @@
   ]
 */
 
-var config = require("../conf/config");
-
 
 exports.json_find = function(obj, key)
 {
