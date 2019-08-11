@@ -10,16 +10,18 @@ var my_config = require("../conf/config.js");
 const CHATWORK_ID_ME = 2642322;
 const CHATPOST_FORMAT = "さん？";
 
+const URL_GAROON_SCHEDULE_API = "https://1908groupwarefunc.azurewebsites.net/api/PostSchedule";
+
 function get_garoon_schedules(results){
 
-    var uri = my_config.cybozufunc.url;
+    var uri = URL_GAROON_SCHEDULE_API;
 
     var options = {
         "method": "GET",
-        "uri": uri,
+        "uri": URL_GAROON_SCHEDULE_API,
         "qs": {
             "gid": results[0].userId.value.trim(),
-            "code": my_config.cybozufunc.code,
+            "code": process.env.MY_GAROON_SCHEDULE_API_CODE, //my_config.cybozufunc.code,
             "diff": 0
         },
         headers: {
@@ -145,9 +147,6 @@ module.exports = function (context, req) {
     var obj = null;
     var msg = null;
     var who = "";
-    var results = null;
-
-    // 通信相手（user_agent）を見て、switch
     var ua = req.headers["user-agent"]; 
 
     if (ua.indexOf("ChatWork-Webhook/", 0) == 0) {
