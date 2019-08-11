@@ -7,14 +7,14 @@ var Promise = require('promise');
 const URL_AZURE_SQLDB = "lspgatewaysql.database.windows.net";
 
 var my_config.sqldb = {
-    "userName": MY_AZURE_SQLDB_USERNAME,
-    "password": MY_AZURE_SQLDB_PASSWORD,
+    "userName": process.env.MY_AZURE_SQLDB_USERNAME,
+    "password": process.env.MY_AZURE_SQLDB_PASSWORD,
     "server": URL_AZURE_SQLDB,
     "options":{
         "useColumnNames": true,
         "rowCollectionOnRequestCompletion": true,
         "encrypt": true,
-        "database": MY_AZURE_SQLDB_DATABASE
+        "database": process.env.MY_AZURE_SQLDB_DATABASE
     }
 };
 
