@@ -5,7 +5,6 @@ var request_promise = require('request-promise');
 var Promise = require('promise');
 
 const TO_REG = /\[To:[0-9]*\].*\n/;
-var my_config = require("../conf/config.js");
 
 const CHATWORK_ID_ME = 2642322;
 const CHATPOST_FORMAT = "さん？";
@@ -20,7 +19,7 @@ function get_garoon_schedules(results){
         "uri": URL_GAROON_SCHEDULE_API,
         "qs": {
             "gid": results[0].userId.value.trim(),
-            "code": process.env.MY_GAROON_SCHEDULE_API_CODE, //my_config.cybozufunc.code,
+            "code": process.env.MY_GAROON_SCHEDULE_API_CODE,
             "diff": 0
         },
         headers: {

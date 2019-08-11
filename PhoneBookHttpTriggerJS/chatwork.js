@@ -1,8 +1,7 @@
-var config = require('../conf/config.js');
-var util = require("./util.js");
-var http_req = require("request");
 
+var http_req = require("request");
 const TO_REG = /\[To:[0-9]*\].*\n/;
+
 
 class CChatworkMessage {
     constructor (postdata) {
@@ -20,7 +19,7 @@ class CChatworkMessage {
 class CWebServiceChatwork {
     constructor () {
         this.httpclient = http_req;
-        this.token = config.chatwork.token;
+        this.token = process.env.MY_CHATWORK_JOSYSBOT_TOKEN;
     }
 
     Reply(org_msg, msg_body) {
