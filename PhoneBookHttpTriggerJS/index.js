@@ -14,8 +14,6 @@ const URL_GAROON_SCHEDULE_API = "https://1908groupwarefunc.azurewebsites.net/api
 
 function get_garoon_schedules(results){
 
-    var uri = URL_GAROON_SCHEDULE_API;
-
     var options = {
         "method": "GET",
         "uri": URL_GAROON_SCHEDULE_API,
