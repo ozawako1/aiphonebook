@@ -9,6 +9,8 @@ const TO_REG = /\[To:[0-9]*\].*\n/;
 const CHATWORK_ID_ME = 2642322;
 const CHATPOST_FORMAT = "さん？";
 
+const DUMMY_GAROON_ID = 9000;
+
 const URL_GAROON_SCHEDULE_API = "https://1908groupwarefunc.azurewebsites.net/api/PostSchedule";
 const URL_LUIS_API = "https://eastus.api.cognitive.microsoft.com/luis/v2.0/apps/1c88b3f7-3a27-4769-bd40-7a4c4d1c784e";
 
@@ -18,7 +20,7 @@ function get_garoon_schedules(results){
         "method": "GET",
         "uri": URL_GAROON_SCHEDULE_API,
         "qs": {
-            "gid": results[0].userId.value.trim(),
+            "gid": results[0].userId.value,
             "code": process.env.MY_GAROON_SCHEDULE_API_CODE,
             "diff": 0
         },
@@ -39,8 +41,10 @@ function get_garoon_schedules(results){
 
 function get_schedule(results){
 
-    if (results.length == 1) {
+    if (results.length == 1 && parseInt(results[0].userId.value.trim(),10) < DUMMY_GAROON_ID) {
         return get_garoon_schedules(results);
+    } else {
+        results[0].event = "n/a";
     }
     return results;
 }
@@ -73,7 +77,7 @@ function post_chatwork_(results, obj, org_msg, schedule){
     var msg2 = "";
 
     if (results.length == 1) {
-        msg1 = results[0].name.value + "さんの予定\n";
+        msg1 = results[0].name.value + "さんの予定は、\n";
         msg2 = results[0].event;
 
         if (msg2 != "") {
