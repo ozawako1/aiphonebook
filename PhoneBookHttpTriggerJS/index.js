@@ -215,7 +215,7 @@ module.exports = function (context, req) {
                     .then((repos) => check_whowhat(repos))
                     .then((whowhat) => sql.query_phonebook(whowhat))
                     .then((results) => post_chatwork(results, obj, msg))
-                    .then((results) => get_schedule(results))
+                    .then((results) => get_schedule(results, msg.from_id))
                     .then((results) => post_chatwork_(results, obj, msg))
                     .catch(function(err){
                         send_sorry(err, obj, msg);
