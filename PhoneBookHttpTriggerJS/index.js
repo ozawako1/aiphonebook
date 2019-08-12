@@ -36,6 +36,11 @@ function get_garoon_schedules(results, from_email){
             results[0].event = parsedBody;
             return results;
         })
+        .catch(function(err){
+            // only log error
+            results[0].event = err.message;
+            return results;
+        });
 }
 
 
