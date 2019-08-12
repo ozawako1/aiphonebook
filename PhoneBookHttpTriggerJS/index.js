@@ -10,7 +10,6 @@ const TO_REG = /\[To:[0-9]*\].*\n/;
 const CHATWORK_ID_ME = 2642322;
 const CHATPOST_FORMAT = "さん？";
 
-//const URL_GAROON_SCHEDULE_API = "https://1908groupwarefunc.azurewebsites.net/api/PostSchedule";
 const URL_GAROON_SCHEDULE_API = "https://garoonfuncj.azurewebsites.net/api/PostSchedule";
 const URL_LUIS_API = "https://eastus.api.cognitive.microsoft.com/luis/v2.0/apps/1c88b3f7-3a27-4769-bd40-7a4c4d1c784e";
 
