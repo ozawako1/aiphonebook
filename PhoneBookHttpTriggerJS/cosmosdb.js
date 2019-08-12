@@ -1,9 +1,9 @@
 
 var my_cosmosdb = {
     "endpoint": "https://yellowpage.documents.azure.com:443/",
-    "primaryKey": "r0rEPqyHlMclIVfUE7CXpn0T54VwMW35fryrn8276QsIRaRaARk6EBjBud2o17pPIRky6cUT3bWBsweLR1pI9A==",
-    "databaseid": "yellowpageCosmosDB",
-    "collectionid": "MotexChatworkUsers"
+    "primaryKey": process.env.MY_COSMOSDB_TOKEN,
+    "databaseid": process.env.MY_COSMOSDB_ID,
+    "collectionid": process.env.MY_COSMOSDB_COLLECTION 
 };
 
 var documentClient = require("documentdb").DocumentClient;
