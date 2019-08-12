@@ -3,24 +3,24 @@ var mychatwork = require('./chatwork.js');
 var sql = require("./sqldb.js");
 var request_promise = require('request-promise');
 var Promise = require('promise');
+var cdb = require('./cosmosdb.js');
 
 const TO_REG = /\[To:[0-9]*\].*\n/;
 
 const CHATWORK_ID_ME = 2642322;
 const CHATPOST_FORMAT = "さん？";
 
-const DUMMY_GAROON_ID = 9000;
-
 const URL_GAROON_SCHEDULE_API = "https://1908groupwarefunc.azurewebsites.net/api/PostSchedule";
 const URL_LUIS_API = "https://eastus.api.cognitive.microsoft.com/luis/v2.0/apps/1c88b3f7-3a27-4769-bd40-7a4c4d1c784e";
 
-function get_garoon_schedules(results){
+function get_garoon_schedules(results, from_email){
 
     var options = {
         "method": "GET",
         "uri": URL_GAROON_SCHEDULE_API,
         "qs": {
-            "gid": results[0].userId.value,
+            "gid": results[0].userId.value.trim(),
+            "femail": from_email[0].account_email,
             "code": process.env.MY_GAROON_SCHEDULE_API_CODE,
             "diff": 0
         },
@@ -39,14 +39,25 @@ function get_garoon_schedules(results){
 }
 
 
-function get_schedule(results){
+function get_schedule(results, chatworkid){
 
+    /*
     if (results.length == 1 && parseInt(results[0].userId.value.trim(),10) < DUMMY_GAROON_ID) {
         return get_garoon_schedules(results);
     } else {
         results[0].event = "n/a";
     }
     return results;
+*/
+    results[0].event = "n/a";
+
+    return new Promise((resolve, reject) => {
+        cdb.query_chatworkmaster(chatworkid)
+            .then((email) => get_garoon_schedules(results, email))
+            .then((results) => resolve(results))
+            .catch((error) => reject(error));
+        });
+
 }
 
 function post_chatwork(results, obj, org_msg){
@@ -172,7 +183,7 @@ module.exports = function (context, req) {
 
                 sql.query_phonebook({"who":who, "what":"phone"})
                     .then((results) => post_chatwork(results, obj, msg))
-                    .then((results) => get_schedule(results))
+                    .then((results) => get_schedule(results, msg.from_id))
                     .then((results) => post_chatwork_(results, obj, msg))
                     .catch(function(err){
                         send_sorry(err, obj, msg);
