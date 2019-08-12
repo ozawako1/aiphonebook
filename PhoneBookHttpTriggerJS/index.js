@@ -80,7 +80,7 @@ function post_chatwork(results, obj, org_msg){
         console.log("No." + (i+1) + " " + msg + "\n");
     }
 
-    total += "\n BIZTEL prefix = 9 / Osaka prefix = 80";
+    total += "\n Prefix: BIZTEL(9) / Osaka(80)";
 
     obj.Reply(org_msg, total);
 
