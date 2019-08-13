@@ -4,7 +4,7 @@ var DBRequest = require('tedious').Request;
 var TYPES = require('tedious').TYPES;
 var Promise = require('promise');
 
-const URL_AZURE_SQLDB = "lspgatewaysql.database.windows.net";
+const URL_AZURE_SQLDB = "mydomesticdatabase.database.windows.net";
 
 var my_config = {
     "userName": process.env.MY_AZURE_SQLDB_USERNAME,
