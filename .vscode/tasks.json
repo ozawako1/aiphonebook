@@ -33,6 +33,12 @@
           "languageWorkers:node:arguments": "--inspect=5858"
         }
       }
+    },
+    {
+      "type": "func",
+      "command": "host start",
+      "problemMatcher": "$func-watch",
+      "isBackground": true
     }
   ]
 }
