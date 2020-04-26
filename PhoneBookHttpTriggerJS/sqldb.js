@@ -91,6 +91,42 @@ function db_execquery(conn, who){
     });
 }
 
+function db_execquery2(conn, who){ 
+
+    console.log("db_execquery");
+
+    var query = "select z.id " +
+    "FROM dbo.USERS_ZOOM as z " +
+    "WHERE z.email = @who_email";
+    
+    var results = [];
+
+    return new Promise((resolve, reject) => {
+
+        queryrequest = new DBRequest(query, function(err, rowCount, rows){
+            if (err) {
+                reject(err);
+            } else if (rowCount == 0){
+                reject(new Error("not Found."))
+            } else {
+                console.log(rowCount + " row(s) found.");
+                rows.forEach(function(row){
+                    results.push(row);
+                });
+            }
+        });  
+
+        queryrequest.addParameter('who_email', TYPES.Char, who);
+
+        queryrequest.on('requestCompleted', function(){
+            console.log('reqCompleted');
+            conn.close();
+            resolve(results);
+        });
+
+        conn.execSql(queryrequest);
+    });
+}
 
 exports.query_phonebook = function(whowhat){
 
@@ -102,3 +138,10 @@ exports.query_phonebook = function(whowhat){
         .then(conn => db_execquery(conn, who));
       
 };
+
+exports.query_zoomusers = function(email) {
+    console.log("query zoomusers");
+
+    return db_conn()
+        .then(conn => db_execquery2(conn, email));
+}

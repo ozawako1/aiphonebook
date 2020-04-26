@@ -27,3 +27,4 @@ node_modules
 PhoneBookHttpTriggerJS/debugcmd.txt
 PhoneBookHttpTriggerJS/lspgateway.ini
 conf/config.js
+azure-functions-core-tools/.telemetry/

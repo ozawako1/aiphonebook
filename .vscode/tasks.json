@@ -3,7 +3,6 @@
   "tasks": [
     {
       "label": "Run Functions Host",
-      "identifier": "runFunctionsHost",
       "type": "shell",
       "command": "func host start",
       "isBackground": true,

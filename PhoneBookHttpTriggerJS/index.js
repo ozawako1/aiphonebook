@@ -5,10 +5,16 @@ var request_promise = require('request-promise');
 var Promise = require('promise');
 var cdb = require('./cosmosdb.js');
 
-const TO_REG = /\[To:[0-9]*\].*\n/;
-
 const CHATWORK_ID_ME = 2642322;
-const CHATPOST_FORMAT = "さん？";
+
+const UNKNOWN_PURPOSE = 0;
+const PURPOSE_PHONEBOOK = 1;
+const PURPOSE_ZOOM = 2;
+
+const REG_TO = /\[To:[0-9]*\].*\n/;
+const CHATPOST_PHONEBOOK_FORMAT = "さん？";
+const CHATPOST_ZOOM_FORMAT = "zoom";
+
 
 const URL_GAROON_SCHEDULE_API = "https://garoonfuncj.azurewebsites.net/api/PostSchedule";
 const URL_LUIS_API = "https://eastus.api.cognitive.microsoft.com/luis/v2.0/apps/1c88b3f7-3a27-4769-bd40-7a4c4d1c784e";
@@ -105,6 +111,55 @@ function post_chatwork_(results, obj, org_msg, schedule){
 }
 
 
+function get_zoommeetings(results){
+
+    var zoom_user_id = results[0].id.value;
+
+    return new Promise((resolve, reject) => {
+        var rp = require('request-promise');
+        var op = {
+            uri: process.env.MY_ZOOM_GETMEETINGS_URL,
+            qs: {
+                zuid: zoom_user_id,
+                now: "true"
+            },
+            json: true
+        };
+        rp(op)
+            .then((results) => resolve(results))
+            .catch((error) => reject(error));
+        });
+
+}
+
+function post_chatwork3(results, obj, org_msg){
+
+    var msg = "";
+
+    if (results.length == 0) {
+        msg = "現在、開催中のMTGはありません。";
+    } else if (results.length == 1) {
+        msg = "現在、以下のMTGが開催されています。\n";
+        msg += "件名:" + results[0].topic + "\n";
+        if (results[0].start_time != undefined) {
+            msg += "開始:" + results[0].start_time + "\n";
+        }
+        if (results[0].duration != undefined) {
+            msg += "時間:" + results[0].duration + " min.\n";
+        }
+        if (results[0].join_url != undefined) {
+            msg += "参加URL:" + results[0].join_url + " \n";
+        }
+    }
+
+    if (msg != "") {
+        obj.Reply(org_msg, msg);
+    }
+
+    return results;
+}
+
+
 function send_sorry(err, obj, org_msg) {
     
     var str = err.message;
@@ -158,6 +213,26 @@ function is_target_room(roomid) {
 }
 
 
+function get_msg_purpose(msg_body){
+
+    var ret = { purpose: UNKNOWN_PURPOSE, msgcore: ""};
+
+    var tmp = msg_body.replace(REG_TO, '');
+    tmp = tmp.toLowerCase();
+
+    if (msg_body.lastIndexOf(CHATPOST_PHONEBOOK_FORMAT) != -1) {
+        ret.purpose = PURPOSE_PHONEBOOK;
+        ret.msgcore = tmp.substring(0, tmp.lastIndexOf(CHATPOST_PHONEBOOK_FORMAT));
+    } else if (tmp.indexOf(CHATPOST_ZOOM_FORMAT) != -1) {
+        ret.purpose = PURPOSE_ZOOM;
+        ret.msgcore = tmp.substring(tmp.indexOf(CHATPOST_ZOOM_FORMAT)+CHATPOST_ZOOM_FORMAT.length);
+    }
+
+    return ret;
+}
+
+
+
 module.exports = function (context, req) {
 
     context.log('HTTP trigger function processed a request.');
@@ -179,12 +254,12 @@ module.exports = function (context, req) {
         if (msg.from_id != CHATWORK_ID_ME && is_target_room(msg.room_id)) {
             
             //指定書式?
-            var pos = msg.body.lastIndexOf(CHATPOST_FORMAT);
-            if ( pos != -1 ) {                
+            var type = get_msg_purpose(msg.body);
 
-                //chatworkの宛先表記を消す
-                who = msg.body.substr(0, pos);
-                who = who.replace(TO_REG, '');
+            switch (type.purpose){
+            case PURPOSE_PHONEBOOK:
+                //「XXさん？」のXX部分
+                who = type.msgcore;
 
                 sql.query_phonebook({"who":who, "what":"phone"})
                     .then((results) => post_chatwork(results, obj, msg))
@@ -194,9 +269,21 @@ module.exports = function (context, req) {
                         send_sorry(err, obj, msg);
                     });
 
-            } else {    
+                break;
+            case PURPOSE_ZOOM:
+                //「zoomNN」のNN部分
+                who = type.msgcore;
+                var email = "motex_zoom" + who + "@motex.co.jp";
+                sql.query_zoomusers(email)
+                    .then((results) => get_zoommeetings(results))
+                    .then((results) => post_chatwork3(results, obj, msg))
+                    .catch(function(err) {
+                        send_sorry(err, obj, msg);
+                    });
 
-                //AIハツドウ！Azure LUIS
+                break;
+            default:
+/*                //AIハツドウ
                 var options = {
                     "uri": URL_LUIS_API,
                     "qs": {
@@ -220,9 +307,11 @@ module.exports = function (context, req) {
                     .catch(function(err){
                         send_sorry(err, obj, msg);
                     });
-            }
+*/
+                break;
+            } //switch
+        } 
 
-        }
     } else {
         context.log("UnKnown Client.");
     }
@@ -235,3 +324,4 @@ module.exports = function (context, req) {
 
 };
 
+//curl -X POST -H "Content-Type: application/json" -H "User-Agent: ChatWork-Webhook/" -d @sample.dat http://localhost:7071/api/PhoneBookHttpTriggerJS
