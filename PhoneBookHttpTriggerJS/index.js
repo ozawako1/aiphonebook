@@ -166,9 +166,9 @@ function send_sorry(err, obj, org_msg) {
     if (org_msg.debug) {
         str += err.stack;
     }
-    var add = "\n「◯◯さん？」や「◯◯さんの連絡先を教えて」と聞いてみてください"
+    var add = "\n「◯◯さん？」や「Zoom7」と聞いてみてください"
 
-    obj.Reply(org_msg, "申し訳ありません。わかりませんでした。["+ str +"]" + add);
+    obj.Reply(org_msg, "申し訳ありません。["+ str +"]" + add);
 }
 
 function check_whowhat(repos) {
