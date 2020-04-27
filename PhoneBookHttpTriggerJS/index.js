@@ -150,7 +150,7 @@ function format_mtg(mtg)
     return fmt;
 }
 
-function post_chatwork3(results, obj, org_msg){
+function post_chatwork3(results, who, obj, org_msg){
 
     var now = "";
     var next = "";
@@ -158,7 +158,7 @@ function post_chatwork3(results, obj, org_msg){
     for (var i = 0 ; i < results.length ; i++){
         var mtg = results[i];
         if (mtg.live == "true"){
-            now += "現在、以下のMTGが開催されています。\n";
+            now += "現在、Zoom"+ who +" で、以下のMTGが開催されています。\n";
             now += format_mtg(mtg);
             now += "\n";
         } else {
@@ -169,7 +169,7 @@ function post_chatwork3(results, obj, org_msg){
         }
     }
     if (now == ""){
-        now = "現在、開催中のMTGはありません。\n\n";
+        now = "現在、Zoom"+ who +" で、開催中のMTGはありません。\n\n";
     }
 
     if (now != "" || next != "") {
@@ -296,7 +296,7 @@ module.exports = function (context, req) {
                 var email = "motex_zoom" + who + "@motex.co.jp";
                 sql.query_zoomusers(email)
                     .then((results) => get_zoommeetings(results))
-                    .then((results) => post_chatwork3(results, obj, msg))
+                    .then((results) => post_chatwork3(results, who, obj, msg))
                     .catch(function(err) {
                         send_sorry(err, obj, msg);
                     });
