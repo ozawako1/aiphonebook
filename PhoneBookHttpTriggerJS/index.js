@@ -158,7 +158,7 @@ function post_chatwork3(results, who, obj, org_msg){
     for (var i = 0 ; i < results.length ; i++){
         var mtg = results[i];
         if (mtg.live == "true"){
-            now += "現在、Zoom"+ who +" で、以下のMTGが開催されています。\n";
+            now += "現在、Zoom"+ who +" で以下のMTGが開催されています。\n";
             now += format_mtg(mtg);
             now += "\n";
         } else {

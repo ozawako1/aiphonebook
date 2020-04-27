@@ -29,3 +29,4 @@ PhoneBookHttpTriggerJS/lspgateway.ini
 conf/config.js
 azure-functions-core-tools/.telemetry/
 sample.dat
+PhoneBookHttpTriggerJS/sample.dat
