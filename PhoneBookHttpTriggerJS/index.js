@@ -4,6 +4,7 @@ var sql = require("./sqldb.js");
 var request_promise = require('request-promise');
 var Promise = require('promise');
 var cdb = require('./cosmosdb.js');
+var moment = require('moment-timezone');
 
 const CHATWORK_ID_ME = 2642322;
 
@@ -120,8 +121,7 @@ function get_zoommeetings(results){
         var op = {
             uri: process.env.MY_ZOOM_GETMEETINGS_URL,
             qs: {
-                zuid: zoom_user_id,
-                now: "true"
+                zuid: zoom_user_id
             },
             json: true
         };
@@ -132,28 +132,48 @@ function get_zoommeetings(results){
 
 }
 
+function format_mtg(mtg)
+{
+    var fmt = "" + mtg.topic + "\n";
+    if (mtg.start_time != undefined) {
+        var dtime = moment(mtg.start_time).tz(mtg.timezone);
+        fmt += " 時間: " + dtime.format("YYYY/MM/DD HH:mm");
+        if (mtg.duration != undefined && mtg.duration > 0) {
+
+            fmt += " - " + dtime.add(mtg.duration, 'm').format("HH:mm");
+        }
+        fmt += "\n";
+    }
+    if (mtg.join_url != undefined) {
+        fmt += " 参加URL: " + mtg.join_url + " \n";
+    }
+    return fmt;
+}
+
 function post_chatwork3(results, obj, org_msg){
 
-    var msg = "";
+    var now = "";
+    var next = "";
 
-    if (results.length == 0) {
-        msg = "現在、開催中のMTGはありません。";
-    } else if (results.length == 1) {
-        msg = "現在、以下のMTGが開催されています。\n";
-        msg += "件名:" + results[0].topic + "\n";
-        if (results[0].start_time != undefined) {
-            msg += "開始:" + results[0].start_time + "\n";
-        }
-        if (results[0].duration != undefined) {
-            msg += "時間:" + results[0].duration + " min.\n";
-        }
-        if (results[0].join_url != undefined) {
-            msg += "参加URL:" + results[0].join_url + " \n";
+    for (var i = 0 ; i < results.length ; i++){
+        var mtg = results[i];
+        if (mtg.live == "true"){
+            now += "現在、以下のMTGが開催されています。\n";
+            now += format_mtg(mtg);
+            now += "\n";
+        } else {
+            if(next == ""){
+                next = "今後、以下のMTGが予定されています。\n";
+            }
+            next += format_mtg(mtg);
         }
     }
+    if (now == ""){
+        now = "現在、開催中のMTGはありません。\n\n";
+    }
 
-    if (msg != "") {
-        obj.Reply(org_msg, msg);
+    if (now != "" || next != "") {
+        obj.Reply(org_msg, now + next);
     }
 
     return results;
