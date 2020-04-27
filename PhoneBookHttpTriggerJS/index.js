@@ -137,7 +137,7 @@ function format_mtg(mtg)
     var fmt = "" + mtg.topic + "\n";
     if (mtg.start_time != undefined) {
         var dtime = moment(mtg.start_time).tz(mtg.timezone);
-        fmt += " 時間: " + dtime.format("YYYY/MM/DD HH:mm");
+        fmt += "時間: " + dtime.format("YYYY/MM/DD HH:mm");
         if (mtg.duration != undefined && mtg.duration > 0) {
 
             fmt += " - " + dtime.add(mtg.duration, 'm').format("HH:mm");
@@ -145,7 +145,7 @@ function format_mtg(mtg)
         fmt += "\n";
     }
     if (mtg.join_url != undefined) {
-        fmt += " 参加URL: " + mtg.join_url + " \n";
+        fmt += "参加URL: " + mtg.join_url + " \n";
     }
     return fmt;
 }
