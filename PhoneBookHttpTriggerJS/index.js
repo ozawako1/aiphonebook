@@ -53,14 +53,6 @@ function get_garoon_schedules(results, from_email){
 
 function get_schedule(results, chatworkid){
 
-    /*
-    if (results.length == 1 && parseInt(results[0].userId.value.trim(),10) < DUMMY_GAROON_ID) {
-        return get_garoon_schedules(results);
-    } else {
-        results[0].event = "n/a";
-    }
-    return results;
-*/
     results[0].event = "n/a";
 
     return new Promise((resolve, reject) => {
@@ -294,13 +286,20 @@ module.exports = function (context, req) {
                 //「zoomNN」のNN部分
                 who = type.msgcore;
                 var email = "motex_zoom" + who + "@motex.co.jp";
-                sql.query_zoomusers(email)
-                    .then((results) => get_zoommeetings(results))
-                    .then((results) => post_chatwork3(results, who, obj, msg))
-                    .catch(function(err) {
-                        send_sorry(err, obj, msg);
-                    });
-
+                obj.is_internal_user(cdb, msg.from_id)
+                .then((internal) => {
+                    if (internal) {
+                        sql.query_zoomusers(email)
+                        .then((results) => get_zoommeetings(results))
+                        .then((results) => post_chatwork3(results, who, obj, msg))
+                        .catch(function(err) {
+                            send_sorry(err, obj, msg);
+                        });
+                    }
+                })
+                .catch((err) => {
+                    send_sorry(err, obj, msg);
+                });
                 break;
             default:
 /*                //AIハツドウ

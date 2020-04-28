@@ -77,6 +77,22 @@ class CWebServiceChatwork {
         return "[rp aid=" + org_msg.from_id + " to=" + org_msg.room_id + "-" + org_msg.message_id +"]" + "\r\n" + body;
     }
 
+
+    is_internal_user(cdb, chatworkid){
+    
+        return new Promise((resolve, reject) => {
+            var ret = false;
+            cdb.query_chatworkmaster(chatworkid)
+            .then((email) => {
+                if (email[0].account_email.indexOf('@motex.co.jp') != -1) {
+                    ret = true;
+                }
+                resolve(ret);
+            })
+            .catch((error) => reject(err));
+        });
+    }
+
 }
 
 module.exports.CChatworkMessage = CChatworkMessage
