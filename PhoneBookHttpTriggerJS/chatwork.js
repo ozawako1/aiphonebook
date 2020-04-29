@@ -1,6 +1,6 @@
 
 var http_req = require("request");
-const TO_REG = /\[To:[0-9]*\].*\n/;
+//const TO_REG = /\[To:[0-9]*\].*\n/;
 
 
 class CChatworkMessage {
