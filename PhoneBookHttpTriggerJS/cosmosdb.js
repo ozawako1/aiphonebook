@@ -49,36 +49,36 @@ function queryCollection(chatworkid) {
 
     return new Promise((resolve, reject) => {
 
-        var queryiterator = client.queryDocuments(collectionUrl,queryspec);
+        var queryiterator = client.queryDocuments(collectionUrl, queryspec);
         var found = queryiterator.hasMoreResults();
 
         if (found == false) {
-            // チャット投稿者自身のメールアドレスがないことは考えにくい
             reject(new Error("Not found"));
         }
         
-        queryiterator.toArray((err, results) => {
+        queryiterator.toArray((err, emails) => {
             //ここでresultsのlengthを見るのは？だが、挙動から入れておく。
             if (err) {
                 reject(err);
-            } else if(results.length == 0) {
+            } else if(emails.length == 0) {
                 reject(new Error("Not Found."));
             } else {
-                for (var i = 0 ; i < results.length ; i++) {
-                    let resultString = JSON.stringify(results[i]);
+                for (var i = 0 ; i < emails.length ; i++) {
+                    //複数あると変
+                    let resultString = JSON.stringify(emails[i]);
                     console.log(`\tQuery returned ${resultString}`);
                 }
-                resolve(results);
+                resolve(emails);
             }
         });
     });
 }
 
-exports.query_chatworkmaster = function(chatworkid) {
+exports.getemails_from_chatworkid = function(chatworkid) {
     return new Promise((resolve, reject) => {
         getCollection()
             .then(() => queryCollection(chatworkid))
-            .then((results) => resolve(results))
+            .then((emails) => resolve(emails))
             .catch((error) => reject(error));
         });
 };

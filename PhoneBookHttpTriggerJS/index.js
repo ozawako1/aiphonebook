@@ -56,8 +56,8 @@ function get_schedule(results, chatworkid){
     results[0].event = "n/a";
 
     return new Promise((resolve, reject) => {
-        cdb.query_chatworkmaster(chatworkid)
-            .then((email) => get_garoon_schedules(results, email))
+        cdb.getemails_from_chatworkid(chatworkid)
+            .then((emails) => get_garoon_schedules(results, emails))
             .then((results) => resolve(results))
             .catch((error) => reject(error));
         });

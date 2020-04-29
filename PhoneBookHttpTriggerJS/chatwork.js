@@ -82,9 +82,9 @@ class CWebServiceChatwork {
     
         return new Promise((resolve, reject) => {
             var ret = false;
-            cdb.query_chatworkmaster(chatworkid)
-            .then((email) => {
-                if (email[0].account_email.indexOf('@motex.co.jp') != -1) {
+            cdb.getemails_from_chatworkid(chatworkid)
+            .then((emails) => {
+                if (emails[0].account_email.indexOf('@motex.co.jp') != -1) {
                     ret = true;
                 }
                 resolve(ret);
