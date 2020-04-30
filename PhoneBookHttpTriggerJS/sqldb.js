@@ -41,7 +41,7 @@ function db_execquery(conn, who){
 
     console.log("db_execquery");
 
-    var query = "select c.name, c.mobilePhone, c.extensionNumber, g.userId " +
+    var query = "select c.name, c.mobilePhone, c.extensionNumber, g.email " +
     "FROM dbo.USERS_CYBOZU as c, dbo.USERS_GAROON as g " +
     "WHERE c.code = g.login_name AND " +
         "(c.surName = @who_surname OR " +
@@ -91,14 +91,8 @@ function db_execquery(conn, who){
     });
 }
 
-function db_execquery2(conn, who){ 
+function db_execquery_(conn, query, params){ 
 
-    console.log("db_execquery");
-
-    var query = "select z.id " +
-    "FROM dbo.USERS_ZOOM as z " +
-    "WHERE z.email = @who_email";
-    
     var results = [];
 
     return new Promise((resolve, reject) => {
@@ -116,7 +110,9 @@ function db_execquery2(conn, who){
             }
         });  
 
-        queryrequest.addParameter('who_email', TYPES.Char, who);
+        params.forEach((p) => {
+            queryrequest.addParameter(p.name, p.type, p.value);
+        });
 
         queryrequest.on('requestCompleted', function(){
             console.log('reqCompleted');
@@ -142,6 +138,15 @@ exports.query_phonebook = function(whowhat){
 exports.query_zoomusers = function(email) {
     console.log("query zoomusers");
 
+    var query = "select z.id FROM dbo.USERS_ZOOM as z WHERE z.email = @who_email";
+    var params = [
+        {
+            name: 'who_email',
+            type: TYPES.Char, 
+            value: email
+        }
+    ];
+
     return db_conn()
-        .then(conn => db_execquery2(conn, email));
+        .then(conn => db_execquery_(conn, query, params));
 }

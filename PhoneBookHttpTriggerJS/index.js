@@ -1,7 +1,7 @@
 var util = require('./util.js');
 var mychatwork = require('./chatwork.js');
 var sql = require("./sqldb.js");
-var request_promise = require('request-promise');
+var rp = require('request-promise');
 var Promise = require('promise');
 var cdb = require('./cosmosdb.js');
 var moment = require('moment-timezone');
@@ -17,63 +17,39 @@ const CHATPOST_PHONEBOOK_FORMAT = "さん？";
 const CHATPOST_ZOOM_FORMAT = "zoom";
 
 
-const URL_GAROON_SCHEDULE_API = "https://garoonfuncj.azurewebsites.net/api/PostSchedule";
 const URL_LUIS_API = "https://eastus.api.cognitive.microsoft.com/luis/v2.0/apps/1c88b3f7-3a27-4769-bd40-7a4c4d1c784e";
 
-function get_garoon_schedules(results, from_email){
-
-    var options = {
-        "method": "GET",
-        "uri": URL_GAROON_SCHEDULE_API,
-        "qs": {
-            "gid": results[0].userId.value.trim(),
-            "femail": from_email[0].account_email,
-            "code": process.env.MY_GAROON_SCHEDULE_API_CODE,
-            "diff": 0
-        },
-        headers: {
-            'User-Agent': 'Request-Promise'
-        },
-        json: true // Automatically parses the JSON string in the response
-    };
-    
-    return request_promise(options)
-        .then(function (parsedBody) {
-            // POST succeeded...
-            results[0].event = parsedBody;
-            return results;
-        })
-        .catch(function(err){
-            // only log error
-            results[0].event = err.message;
-            return results;
-        });
-}
-
-
-function get_schedule(results, chatworkid){
-
-    results[0].event = "n/a";
+function get_garoon_schedules(email){
 
     return new Promise((resolve, reject) => {
-        cdb.getemails_from_chatworkid(chatworkid)
-            .then((emails) => get_garoon_schedules(results, emails))
-            .then((results) => resolve(results))
-            .catch((error) => reject(error));
-        });
+        var options = {
+            "method": "GET",
+            "uri": process.env.MY_GAROON_GETSCHEDULE_URL,
+            "qs": {
+                "target_user": email
+            },
+            headers: {
+                'User-Agent': 'Request-Promise'
+            },
+            json: true // Automatically parses the JSON string in the response
+        };
+        rp(options)
+            .then((respbody) => resolve(respbody))
+            .catch((err) => reject(err));
+    });
 
 }
 
-function post_chatwork(results, obj, org_msg){
+function post_chatwork(phonebook, obj, org_msg){
 
     var total = "";
 
-    for (var i = 0 ; i < results.length ; i++) {
+    for (var i = 0 ; i < phonebook.length ; i++) {
         var msg = "";
 
-        msg += results[i].name.value + "さんの連絡先は、\n";
-        msg += "内線電話:" + results[i].extensionNumber.value + "\n";
-        msg += "携帯電話:" + results[i].mobilePhone.value + "\n";
+        msg += phonebook[i].name.value + " さんの連絡先は、\n";
+        msg += "内線電話:" + phonebook[i].extensionNumber.value + "\n";
+        msg += "携帯電話:" + phonebook[i].mobilePhone.value + "\n";
         
         total += msg;
         console.log("No." + (i+1) + " " + msg + "\n");
@@ -83,33 +59,73 @@ function post_chatwork(results, obj, org_msg){
 
     obj.Reply(org_msg, total);
 
-    return results;
 }
 
-function post_chatwork_(results, obj, org_msg, schedule){
+function get_time(date)
+{
+    if (date == "") {
+        return date;
+    }
+    var m = moment(date).tz("Asia/Tokyo");
+    return m.format("HH:mm");
+}
 
-    var msg1 = "";
-    var msg2 = "";
+function isProgress(start, end){
+    var ret = false;
+    var now = Date.now();
 
-    if (results.length == 1) {
-        msg1 = results[0].name.value + "さんの予定は、\n";
-        msg2 = results[0].event;
-
-        if (msg2 != "") {
-            obj.Post(org_msg, msg1 + msg2);
-        }
+    if (start <= now && now <= end) {
+        ret = true;
     }
 
-    return results;
+    return ret;
+}
+
+function format_schedule(events){
+
+    var mark = "";
+    var msg = "登録されていません。";
+
+    for( var i = 0 ; i < events.length ; i++){
+        
+        mark = " ";
+        if (i == 0) {
+            msg = "";
+        }
+        
+        if (events[i].isAllDay == false) {
+            var st = events[i].start;
+            var et = events[i].end;
+            st = !st ? "" : new Date(st.dateTime);
+            et = !et ? "" : new Date(et.dateTime);
+            if(st != "" && et != "" && isProgress(st, et)) {
+                mark = "*"
+            }
+            msg += get_time(st) + "-" + get_time(et) + " " + mark;
+        }
+
+        msg += events[i].subject + "\n"
+    }
+
+    return msg;
+
+}
+
+function post_chatwork_(who, schedules, obj, org_msg){
+    
+    var msg1 = who + " さんの予定は、\n";
+    var msg2 = format_schedule(schedules);
+    obj.Post(org_msg, msg1 + msg2);
+    
+    return new Promise((resolve, reject) => {
+        resolve();
+    });
 }
 
 
-function get_zoommeetings(results){
-
-    var zoom_user_id = results[0].id.value;
+function get_zoommeetings(zoom_user_id){
 
     return new Promise((resolve, reject) => {
-        var rp = require('request-promise');
         var op = {
             uri: process.env.MY_ZOOM_GETMEETINGS_URL,
             qs: {
@@ -124,7 +140,7 @@ function get_zoommeetings(results){
 
 }
 
-function format_mtg(mtg)
+function format_mtg_z(mtg)
 {
     var fmt = "" + mtg.topic + "\n";
     if (mtg.start_time != undefined) {
@@ -150,18 +166,18 @@ function post_chatwork3(results, who, obj, org_msg){
     for (var i = 0 ; i < results.length ; i++){
         var mtg = results[i];
         if (mtg.live == "true"){
-            now += "現在、Zoom"+ who +" で以下のMTGが開催されています。\n";
-            now += format_mtg(mtg);
+            now += "現在、"+ who +" で以下のMTGが開催されています。\n";
+            now += format_mtg_z(mtg);
             now += "\n";
         } else {
             if(next == ""){
                 next = "今後、以下のMTGが予定されています。\n";
             }
-            next += format_mtg(mtg);
+            next += format_mtg_z(mtg);
         }
     }
     if (now == ""){
-        now = "現在、Zoom"+ who +" で、開催中のMTGはありません。\n\n";
+        now = "現在、"+ who +" で、開催中のMTGはありません。\n\n";
     }
 
     if (now != "" || next != "") {
@@ -182,6 +198,7 @@ function send_sorry(err, obj, org_msg) {
 
     obj.Reply(org_msg, "申し訳ありません。["+ str +"]" + add);
 }
+
 
 function check_whowhat(repos) {
     console.log('User has %s repos', repos.query);
@@ -237,7 +254,7 @@ function get_msg_purpose(msg_body){
         ret.msgcore = tmp.substring(0, tmp.lastIndexOf(CHATPOST_PHONEBOOK_FORMAT));
     } else if (tmp.indexOf(CHATPOST_ZOOM_FORMAT) != -1) {
         ret.purpose = PURPOSE_ZOOM;
-        ret.msgcore = tmp.substring(tmp.indexOf(CHATPOST_ZOOM_FORMAT)+CHATPOST_ZOOM_FORMAT.length);
+        ret.msgcore = "Zoom" + tmp.substring(tmp.indexOf(CHATPOST_ZOOM_FORMAT)+CHATPOST_ZOOM_FORMAT.length);
     }
 
     return ret;
@@ -272,26 +289,55 @@ module.exports = function (context, req) {
             case PURPOSE_PHONEBOOK:
                 //「XXさん？」のXX部分
                 who = type.msgcore;
+                var singleuser = false;
+                var fullname = who;
+                var target = "";
+                var phonebook = [];
 
                 sql.query_phonebook({"who":who, "what":"phone"})
-                    .then((results) => post_chatwork(results, obj, msg))
-                    .then((results) => get_schedule(results, msg.from_id))
-                    .then((results) => post_chatwork_(results, obj, msg))
-                    .catch(function(err){
-                        send_sorry(err, obj, msg);
-                    });
+                .then((results) => {
+                    if (results.length == 1) {
+                        singleuser = true;
+                        target = results[0].email.value;
+                        fullname = results[0].name.value
+                    }
+                    phonebook = results;
+                })
+                .then(() => post_chatwork(phonebook, obj, msg))
+                .then(() => {
+                    if (singleuser) {
+                        obj.is_internal_user(cdb, msg.from_id)
+                        .then((internal) => {
+                            if (internal) {
+                                get_garoon_schedules(target)
+                                .then((schedule) => post_chatwork_(fullname, schedule, obj, msg))
+                                .catch((err) => post_chatwork_(fullname, [], obj, msg));    
+                            }
+                        })
+                        .catch(function(err){
+                            send_sorry(err, obj, msg);
+                        });
+                    }
+                })
+                .catch(function(err){
+                    send_sorry(err, obj, msg);
+                });
 
                 break;
             case PURPOSE_ZOOM:
                 //「zoomNN」のNN部分
+                
                 who = type.msgcore;
-                var email = "motex_zoom" + who + "@motex.co.jp";
+                var email = "motex_" + who + "@motex.co.jp";
+
                 obj.is_internal_user(cdb, msg.from_id)
                 .then((internal) => {
                     if (internal) {
                         sql.query_zoomusers(email)
-                        .then((results) => get_zoommeetings(results))
+                        .then((results) => get_zoommeetings(results[0].id.value.trim()))
                         .then((results) => post_chatwork3(results, who, obj, msg))
+                        .then(() => get_garoon_schedules(email))
+                        .then((results) => post_chatwork_(who, results, obj, msg))
                         .catch(function(err) {
                             send_sorry(err, obj, msg);
                         });
@@ -317,7 +363,7 @@ module.exports = function (context, req) {
                     json: true // Automatically parses the JSON strng in the response
                 };
                 
-                request_promise(options)
+                rp(options)
                     .then((repos) => check_whowhat(repos))
                     .then((whowhat) => sql.query_phonebook(whowhat))
                     .then((results) => post_chatwork(results, obj, msg))
@@ -343,4 +389,3 @@ module.exports = function (context, req) {
 
 };
 
-//curl -X POST -H "Content-Type: application/json" -H "User-Agent: ChatWork-Webhook/" -d @sample.dat http://localhost:7071/api/PhoneBookHttpTriggerJS

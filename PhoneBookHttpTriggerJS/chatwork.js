@@ -83,13 +83,13 @@ class CWebServiceChatwork {
         return new Promise((resolve, reject) => {
             var ret = false;
             cdb.getemails_from_chatworkid(chatworkid)
-            .then((emails) => {
-                if (emails[0].account_email.indexOf('@motex.co.jp') != -1) {
+            .then((email) => {
+                if (email.indexOf('@motex.co.jp') != -1) {
                     ret = true;
                 }
                 resolve(ret);
             })
-            .catch((error) => reject(err));
+            .catch((error) => resolve(false));　// エラーでも存在しない扱いにする。
         });
     }
 

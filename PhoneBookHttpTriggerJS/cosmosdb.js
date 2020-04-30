@@ -62,13 +62,10 @@ function queryCollection(chatworkid) {
                 reject(err);
             } else if(emails.length == 0) {
                 reject(new Error("Not Found."));
+            } else if(emails.length == 1) {
+                resolve(emails[0].account_email);
             } else {
-                for (var i = 0 ; i < emails.length ; i++) {
-                    //複数あると変
-                    let resultString = JSON.stringify(emails[i]);
-                    console.log(`\tQuery returned ${resultString}`);
-                }
-                resolve(emails);
+                reject(new Error("Invalid chatwork id [" + chatworkid + "]" ));
             }
         });
     });
