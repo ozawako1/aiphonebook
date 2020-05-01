@@ -266,6 +266,17 @@ module.exports = function (context, req) {
 
     context.log('HTTP trigger function processed a request.');
 
+    var DEBUG = process.env.MY_DEBUG;
+    if (DEBUG == "true") {
+        var fs = require('fs');
+        var dmp = moment().tz('Asia/Tokyo').format('YYYYMMDDHHmmss') + ".json";
+        fs.writeFile("./" + dmp, JSON.stringify(req), function(err){
+            if (err) {
+                context.log(err);
+            }
+        });
+    }
+
     var obj = null;
     var msg = null;
     var who = "";
