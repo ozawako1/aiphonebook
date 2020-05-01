@@ -164,6 +164,12 @@ function format_meetings(Who, Meetings){
 
 function reply_chatwork(obj, org_msg, reply_msg){
     
+    return obj.Reply(org_msg, reply_msg);
+
+}
+
+function post_chatwork(obj, org_msg, reply_msg){
+    
     return obj.Post(org_msg, reply_msg);
 
 }
@@ -303,7 +309,7 @@ module.exports = function (context, req) {
                             if (internal) {
                                 getGaroonSchedule(target)
                                 .then((schedule) => format_schedule(fullname, schedule))
-                                .then((formatted) => reply_chatwork(obj, msg, formatted))
+                                .then((formatted) => post_chatwork(obj, msg, formatted))
                                 .catch(function(err) {
                                     send_sorry(err, obj, msg);
                                 });        
@@ -333,7 +339,7 @@ module.exports = function (context, req) {
                         .then((formatted) => reply_chatwork(obj, msg, formatted))
                         .then(() => getGaroonSchedule(email))
                         .then((schedule) => format_schedule(who, schedule))
-                        .then((formatted) => reply_chatwork(obj, msg, formatted))
+                        .then((formatted) => post_chatwork(obj, msg, formatted))
                         .catch(function(err) {
                             send_sorry(err, obj, msg);
                         });
