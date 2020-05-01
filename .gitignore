@@ -33,3 +33,5 @@ PhoneBookHttpTriggerJS/sample.dat
 2020*.json
 PhoneBookHttpTriggerJS/sample.dat
 PhoneBookHttpTriggerJS/real.dat
+.DS_Store
+PhoneBookHttpTriggerJS/sample2.dat
