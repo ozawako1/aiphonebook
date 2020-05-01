@@ -31,3 +31,5 @@ azure-functions-core-tools/.telemetry/
 sample.dat
 PhoneBookHttpTriggerJS/sample.dat
 2020*.json
+PhoneBookHttpTriggerJS/sample.dat
+PhoneBookHttpTriggerJS/real.dat
