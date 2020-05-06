@@ -89,6 +89,42 @@ function format_schedule(who, schedule){
     return msg1 + msg2;
 }
 
+function format_meetings(Who, Meetings){
+
+    var now = "";
+
+    for (var i = 0 ; i < Meetings.length ; i++){
+        var mtg = results[i];
+
+        now += "現在、"+ Who +" で以下のMTGが開催されています。\n";
+        
+        //タイトル
+        now += mtg.topic + "\n";
+        //時刻設定
+        if (mtg.start_time != undefined) {
+            var dtime = moment(mtg.start_time).tz(mtg.timezone);
+            now += "時間: " + dtime.format("YYYY/MM/DD HH:mm");
+            //所要時間指定あり
+            if (mtg.duration != undefined && mtg.duration > 0) {
+                now += " - " + dtime.add(mtg.duration, 'm').format("HH:mm");
+            }
+            now += "\n";
+        }
+        // 参加URL
+        if (mtg.join_url != undefined) {
+            now += "参加URL: " + mtg.join_url + " \n";
+        }
+
+    }
+
+    if (now == ""){
+        now = "現在、"+ Who +" で、開催中のMTGはありません。\n\n";
+    }
+
+    return now;
+}
+
+
 function getLiveZoomMeeting(zoom_user_email){
 
     return new Promise((resolve, reject) => {
@@ -125,41 +161,6 @@ function getGaroonSchedule(email){
             .catch((err) => reject(err));
     });
 
-}
-
-function format_meetings(Who, Meetings){
-
-    var now = "";
-
-    for (var i = 0 ; i < Meetings.length ; i++){
-        var mtg = results[i];
-
-        now += "現在、"+ Who +" で以下のMTGが開催されています。\n";
-        
-        //タイトル
-        now += mtg.topic + "\n";
-        //時刻設定
-        if (mtg.start_time != undefined) {
-            var dtime = moment(mtg.start_time).tz(mtg.timezone);
-            now += "時間: " + dtime.format("YYYY/MM/DD HH:mm");
-            //所要時間指定あり
-            if (mtg.duration != undefined && mtg.duration > 0) {
-                now += " - " + dtime.add(mtg.duration, 'm').format("HH:mm");
-            }
-            now += "\n";
-        }
-        // 参加URL
-        if (mtg.join_url != undefined) {
-            now += "参加URL: " + mtg.join_url + " \n";
-        }
-
-    }
-
-    if (now == ""){
-        now = "現在、"+ Who +" で、開催中のMTGはありません。\n\n";
-    }
-
-    return now;
 }
 
 function reply_chatwork(obj, org_msg, reply_msg){
