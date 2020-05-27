@@ -94,7 +94,7 @@ function format_meetings(Who, Meetings){
     var now = "";
 
     for (var i = 0 ; i < Meetings.length ; i++){
-        var mtg = results[i];
+        var mtg = Meetings[i];
 
         now += "現在、"+ Who +" で以下のMTGが開催されています。\n";
         
