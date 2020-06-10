@@ -297,7 +297,7 @@ module.exports = function (context, req) {
                     if (results.length == 1) {
                         singleuser = true;
                         target = results[0].email.value;
-                        fullname = results[0].name.value
+                        fullname = results[0].name.value;
                     }
                     phonebook = results;
                 })
