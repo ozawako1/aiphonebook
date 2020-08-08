@@ -3,7 +3,6 @@ var mychatwork = require('./chatwork.js');
 var sql = require("./sqldb.js");
 var rp = require('request-promise');
 var Promise = require('promise');
-var cdb = require('./cosmosdb.js');
 var moment = require('moment-timezone');
 
 const CHATWORK_ID_ME = 2642322;
@@ -47,9 +46,9 @@ function format_phonebook(phonebook){
     for (var i = 0 ; i < phonebook.length ; i++) {
         var msg = "";
 
-        msg += phonebook[i].name.value + " さんの連絡先は、\n";
-        msg += "内線電話:" + phonebook[i].extensionNumber.value + "\n";
-        msg += "携帯電話:" + phonebook[i].mobilePhone.value + "\n";
+        msg += phonebook[i].name + " さんの連絡先は、\n";
+        msg += "内線電話:" + phonebook[i].extensionNumber + "\n";
+        msg += "携帯電話:" + phonebook[i].mobilePhone + "\n";
         
         total += msg;
     }
@@ -247,9 +246,23 @@ function get_msg_purpose(msg_body){
     return ret;
 }
 
+function is_internal_user(db, chatworkid){
+    
+    var ret = false;
 
+    return new Promise((resolve) => {
+        db.query_USERS_CHATWORK(chatworkid)
+        .then((results) => {
+            if (results[0].account_email.indexOf('@motex.co.jp') != -1) {
+                ret = true;
+            }
+            resolve(ret);
+        })
+        .catch((err) => resolve(false));
+    });
+}
 
-module.exports = function (context, req) {
+module.exports = async function (context, req) {
 
     context.log('HTTP trigger function processed a request.');
 
@@ -267,6 +280,7 @@ module.exports = function (context, req) {
     var obj = null;
     var msg = null;
     var who = "";
+    var internal = false;
     var ua = req.headers["user-agent"]; 
 
     if (ua.indexOf("ChatWork-Webhook/", 0) == 0) {
@@ -276,10 +290,15 @@ module.exports = function (context, req) {
         obj = new mychatwork.CWebServiceChatwork();
 
         context.log("qeury=[" + msg.body + "]");
+        try {
+            internal = await is_internal_user(sql, msg.from_id);
+        } catch (err) {
+
+        }
 
         // 自分発信は無視。
         if (msg.from_id != CHATWORK_ID_ME && is_target_room(msg.room_id)) {
-            
+
             //指定書式?
             var type = get_msg_purpose(msg.body);
 
@@ -296,29 +315,21 @@ module.exports = function (context, req) {
                 .then((results) => {
                     if (results.length == 1) {
                         singleuser = true;
-                        target = results[0].email.value;
-                        fullname = results[0].name.value;
+                        target = results[0].email;
+                        fullname = results[0].name;
                     }
                     phonebook = results;
                 })
                 .then(() => format_phonebook(phonebook))
                 .then((formatted) => reply_chatwork(obj, msg, formatted))
                 .then(() => {
-                    if (singleuser) {
-                        obj.is_internal_user(cdb, msg.from_id)
-                        .then((internal) => {
-                            if (internal) {
-                                getGaroonSchedule(target)
-                                .then((schedule) => format_schedule(fullname, schedule))
-                                .then((formatted) => post_chatwork(obj, msg, formatted))
-                                .catch(function(err) {
-                                    send_sorry(err, obj, msg);
-                                });        
-                            }
-                        })
-                        .catch(function(err){
+                    if (singleuser && internal) {
+                        getGaroonSchedule(target)
+                        .then((schedule) => format_schedule(fullname, schedule))
+                        .then((formatted) => post_chatwork(obj, msg, formatted))
+                        .catch(function(err) {
                             send_sorry(err, obj, msg);
-                        });
+                        });        
                     }
                 })
                 .catch(function(err){
@@ -331,24 +342,18 @@ module.exports = function (context, req) {
                 
                 who = type.msgcore;
                 var email = "motex_" + who + "@motex.co.jp";
+                if (internal) {
+                    getLiveZoomMeeting(email)
+                    .then((meetings) => format_meetings(who, meetings))
+                    .then((formatted) => reply_chatwork(obj, msg, formatted))
+                    .then(() => getGaroonSchedule(email))
+                    .then((schedule) => format_schedule(who, schedule))
+                    .then((formatted) => post_chatwork(obj, msg, formatted))
+                    .catch(function(err) {
+                        send_sorry(err, obj, msg);
+                    });
+                }
 
-                obj.is_internal_user(cdb, msg.from_id)
-                .then((internal) => {
-                    if (internal) {
-                        getLiveZoomMeeting(email)
-                        .then((meetings) => format_meetings(who, meetings))
-                        .then((formatted) => reply_chatwork(obj, msg, formatted))
-                        .then(() => getGaroonSchedule(email))
-                        .then((schedule) => format_schedule(who, schedule))
-                        .then((formatted) => post_chatwork(obj, msg, formatted))
-                        .catch(function(err) {
-                            send_sorry(err, obj, msg);
-                        });
-                    }
-                })
-                .catch((err) => {
-                    send_sorry(err, obj, msg);
-                });
                 break;
             default:
 /*                //AIハツドウ

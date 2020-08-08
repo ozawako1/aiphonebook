@@ -1,7 +1,5 @@
 
 var http_req = require("request");
-//const TO_REG = /\[To:[0-9]*\].*\n/;
-
 
 class CChatworkMessage {
     constructor (postdata) {
@@ -77,21 +75,6 @@ class CWebServiceChatwork {
         return "[rp aid=" + org_msg.from_id + " to=" + org_msg.room_id + "-" + org_msg.message_id +"]" + "\r\n" + body;
     }
 
-
-    is_internal_user(cdb, chatworkid){
-    
-        return new Promise((resolve, reject) => {
-            var ret = false;
-            cdb.getemails_from_chatworkid(chatworkid)
-            .then((email) => {
-                if (email.indexOf('@motex.co.jp') != -1) {
-                    ret = true;
-                }
-                resolve(ret);
-            })
-            .catch((error) => resolve(false));　// エラーでも存在しない扱いにする。
-        });
-    }
 
 }
 

@@ -11,8 +11,6 @@ var my_config = {
     "password": process.env.MY_AZURE_SQLDB_PASSWORD,
     "server": URL_AZURE_SQLDB,
     "options":{
-        "useColumnNames": true,
-        "rowCollectionOnRequestCompletion": true,
         "encrypt": true,
         "database": process.env.MY_AZURE_SQLDB_DATABASE
     }
@@ -53,16 +51,11 @@ function db_execquery(conn, who){
 
     return new Promise((resolve, reject) => {
 
-        queryrequest = new DBRequest(query, function(err, rowCount, rows){
+        queryrequest = new DBRequest(query, function(err, rowCount){
             if (err) {
                 reject(err);
-            } else if (rowCount == 0){
-                reject(new Error("not Found."))
             } else {
                 console.log(rowCount + " row(s) found.");
-                rows.forEach(function(row){
-                    results.push(row);
-                });
             }
         });  
 
@@ -71,16 +64,16 @@ function db_execquery(conn, who){
         queryrequest.addParameter('who_givename', TYPES.NVarChar, who);
         queryrequest.addParameter('who_givename_read', TYPES.NVarChar, who);
 
-/*
         queryrequest.on('row', function(columns) {  
-            columns.forEach( function(column) {
-                var val = '';
-                if (column.value != null) {
-                    val = column.value;
-                }          
+            var obj = {};
+            columns.forEach(function(col){
+                var nam = col.metadata.colName;
+                var val = col.value.trim();
+                obj[nam] = val;
             });
+            results.push(obj);
         });
-*/
+        
         queryrequest.on('requestCompleted', function(){
             console.log('reqCompleted');
             conn.close();
@@ -97,21 +90,26 @@ function db_execquery_(conn, query, params){
 
     return new Promise((resolve, reject) => {
 
-        queryrequest = new DBRequest(query, function(err, rowCount, rows){
+        queryrequest = new DBRequest(query, function(err, rowCount){
             if (err) {
                 reject(err);
-            } else if (rowCount == 0){
-                reject(new Error("not Found."))
             } else {
                 console.log(rowCount + " row(s) found.");
-                rows.forEach(function(row){
-                    results.push(row);
-                });
             }
         });  
 
         params.forEach((p) => {
             queryrequest.addParameter(p.name, p.type, p.value);
+        });
+
+        queryrequest.on('row', function(columns) {  
+            var obj = {};
+            columns.forEach(function(col){
+                var nam = col.metadata.colName;
+                var val = col.value.trim();
+                obj[nam] = val;
+            });
+            results.push(obj);
         });
 
         queryrequest.on('requestCompleted', function(){
@@ -149,4 +147,21 @@ exports.query_zoomusers = function(email) {
 
     return db_conn()
         .then(conn => db_execquery_(conn, query, params));
-}
+};
+
+exports.query_USERS_CHATWORK = function(chatworkid){
+    console.log("query USERS_CHATWORK");
+
+    var query = "SELECT c.account_email FROM dbo.USERS_CHATWORK as c WHERE c.account_id = @accountid";
+    var params = [
+        {
+            name: 'accountid',
+            type: TYPES.Char,
+            value: chatworkid
+        }
+    ];
+    
+    return db_conn()
+        .then(conn => db_execquery_(conn, query, params));
+
+};
