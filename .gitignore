@@ -24,14 +24,13 @@ appsettings.json
 local.settings.json
 
 node_modules
-PhoneBookHttpTriggerJS/debugcmd.txt
-PhoneBookHttpTriggerJS/lspgateway.ini
 conf/config.js
 azure-functions-core-tools/.telemetry/
 sample.dat
-PhoneBookHttpTriggerJS/sample.dat
 2020*.json
-PhoneBookHttpTriggerJS/sample.dat
-PhoneBookHttpTriggerJS/real.dat
 .DS_Store
+PhoneBookHttpTriggerJS/sample.dat
 PhoneBookHttpTriggerJS/sample2.dat
+PhoneBookHttpTriggerJS/real.dat
+PhoneBookHttpTriggerJS/debugcmd.txt
+PhoneBookHttpTriggerJS/lspgateway.ini

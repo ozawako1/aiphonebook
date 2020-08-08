@@ -81,8 +81,11 @@ function format_schedule(who, schedule){
             }
             msg2 += get_time(st) + "-" + get_time(et) + " " + mark;
         }
-
-        msg2 += schedule[i].subject + "\n"
+        var subj = schedule[i].subject;
+        if (subj == undefined || subj == "") {
+            subj = schedule[i].eventMenu;
+        }
+        msg2 += subj + "\n"
     }
 
     return msg1 + msg2;
