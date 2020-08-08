@@ -9,7 +9,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "documentdb": "^1.15.3",
     "moment-timezone": "^0.5.28",
     "promise": "^8.0.3",
     "request": "^2.88.0",
