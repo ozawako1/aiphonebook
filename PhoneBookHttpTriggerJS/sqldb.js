@@ -35,55 +35,6 @@ function db_conn(){
     });
 }
 
-function db_execquery(conn, who){ 
-
-    console.log("db_execquery");
-
-    var query = "select c.name, c.mobilePhone, c.extensionNumber, g.email " +
-    "FROM dbo.USERS_CYBOZU as c, dbo.USERS_GAROON as g " +
-    "WHERE c.code = g.login_name AND " +
-        "(c.surName = @who_surname OR " +
-        "c.surNameReading = @who_surname_read OR " +
-        "c.givenName = @who_givename OR " +
-        "c.givenNameReading = @who_givename_read)";
-
-    var results = [];
-
-    return new Promise((resolve, reject) => {
-
-        queryrequest = new DBRequest(query, function(err, rowCount){
-            if (err) {
-                reject(err);
-            } else {
-                console.log(rowCount + " row(s) found.");
-            }
-        });  
-
-        queryrequest.addParameter('who_surname', TYPES.NVarChar, who);
-        queryrequest.addParameter('who_surname_read', TYPES.NVarChar, who);
-        queryrequest.addParameter('who_givename', TYPES.NVarChar, who);
-        queryrequest.addParameter('who_givename_read', TYPES.NVarChar, who);
-
-        queryrequest.on('row', function(columns) {  
-            var obj = {};
-            columns.forEach(function(col){
-                var nam = col.metadata.colName;
-                var val = col.value.trim();
-                obj[nam] = val;
-            });
-            results.push(obj);
-        });
-        
-        queryrequest.on('requestCompleted', function(){
-            console.log('reqCompleted');
-            conn.close();
-            resolve(results);
-        });
-
-        conn.execSql(queryrequest);
-    });
-}
-
 function db_execquery_(conn, query, params){ 
 
     var results = [];
@@ -125,11 +76,39 @@ function db_execquery_(conn, query, params){
 exports.query_phonebook = function(whowhat){
 
     console.log("query phonebook");
-  
-    var who = whowhat.who;
+
+    var query = "select c.name, c.mobilePhone, c.extensionNumber, g.email " +
+        "FROM dbo.USERS_CYBOZU as c, dbo.USERS_GAROON as g " +
+        "WHERE c.code = g.login_name AND " +
+        "(c.surName = @who_surname OR " +
+        "c.surNameReading = @who_surname_read OR " +
+        "c.givenName = @who_givename OR " +
+        "c.givenNameReading = @who_givename_read)";
+    var params = [
+        {
+            name: 'who_surname',
+            type: TYPES.NVarChar, 
+            value: whowhat.who
+        },
+        {
+            name: 'who_surname_read',
+            type: TYPES.NVarChar, 
+            value: whowhat.who
+        },
+        {
+            name: 'who_givename',
+            type: TYPES.NVarChar, 
+            value: whowhat.who
+        },
+        {
+            name: 'who_givename_read',
+            type: TYPES.NVarChar, 
+            value: whowhat.who
+        }        
+    ];
     
     return db_conn()
-        .then(conn => db_execquery(conn, who));
+        .then(conn => db_execquery_(conn, query, params));
       
 };
 
