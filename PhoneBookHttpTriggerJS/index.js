@@ -183,7 +183,7 @@ function send_sorry(err, obj, org_msg) {
     if (org_msg.debug) {
         str += err.stack;
     }
-    var add = "\n「◯◯さん？」や「Zoom7」と聞いてみてください"
+    var add = "\n「◯◯さん？」と聞いてみてください。"
 
     obj.Reply(org_msg, "申し訳ありません。["+ str +"]" + add);
 }
@@ -340,6 +340,7 @@ module.exports = async function (context, req) {
                 });
 
                 break;
+/*
             case PURPOSE_ZOOM:
                 //「zoomNN」のNN部分
                 
@@ -358,7 +359,9 @@ module.exports = async function (context, req) {
                 }
 
                 break;
+*/
             default:
+                send_sorry(new Error("Unknown format."), obj, msg);
 /*                //AIハツドウ
                 var options = {
                     "uri": URL_LUIS_API,
